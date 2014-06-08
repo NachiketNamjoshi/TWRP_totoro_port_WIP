@@ -1,20 +1,4 @@
-/*
-        Copyright 2012 bigbiff/Dees_Troy TeamWin
-        This file is part of TWRP/TeamWin Recovery Project.
-
-        TWRP is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        TWRP is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with TWRP.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// keyboard.cpp - GUIKeyboard object
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -34,8 +18,9 @@
 #include <string>
 
 extern "C" {
-#include "../twcommon.h"
+#include "../common.h"
 #include "../minuitwrp/minui.h"
+#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
@@ -45,9 +30,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	: Conditional(node)
 {
 	int layoutindex, rowindex, keyindex, Xindex, Yindex, keyHeight = 0, keyWidth = 0;
-	rowY = colX = -1;
-	highlightRenderCount = hasHighlight = 0;
-	char resource[10], layout[8], row[5], key[6], longpress[7];
+	char resource[9], layout[7], row[4], key[5], longpress[6];
 	xml_attribute<>* attr;
 	xml_node<>* child;
 	xml_node<>* keylayout;
@@ -68,17 +51,6 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	if (child)
 	{
 		mAction = new GUIAction(node);
-	}
-
-	memset(&mHighlightColor, 0, sizeof(COLOR));
-	child = node->first_node("highlight");
-	if (child) {
-		attr = child->first_attribute("color");
-		if (attr) {
-			hasHighlight = 1;
-			std::string color = attr->value();
-			ConvertStrToColor(color, &mHighlightColor);
-		}
 	}
 
 	// Load the images for the different layouts
@@ -111,7 +83,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 	while (keylayout)
 	{
 		if (layoutindex > MAX_KEYBOARD_LAYOUTS) {
-			LOGERR("Too many layouts defined in keyboard.\n");
+			LOGE("Too many layouts defined in keyboard.\n");
 			return;
 		}
 
@@ -136,7 +108,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 		while (keyrow)
 		{
 			if (rowindex > MAX_KEYBOARD_ROWS) {
-				LOGERR("Too many rows defined in keyboard.\n");
+				LOGE("Too many rows defined in keyboard.\n");
 				return;
 			}
 
@@ -153,20 +125,20 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 				char keyinfo[255];
 
 				if (keyindex > MAX_KEYBOARD_KEYS) {
-					LOGERR("Too many keys defined in a keyboard row.\n");
+					LOGE("Too many keys defined in a keyboard row.\n");
 					return;
 				}
 
 				stratt = attr->value();
 				if (strlen(stratt.c_str()) >= 255) {
-					LOGERR("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
+					LOGE("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
 					return;
 				}
 
 				strcpy(keyinfo, stratt.c_str());
 
 				if (strlen(keyinfo) == 0) {
-					LOGERR("No key info on layout%i, row%i, key%dd.\n", layoutindex, rowindex, keyindex);
+					LOGE("No key info on layout%i, row%i, key%dd.\n", layoutindex, rowindex, keyindex);
 					return;
 				}
 
@@ -215,7 +187,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 						// This is an action
 						keyboard_keys[layoutindex - 1][rowindex - 1][keyindex - 1].key = KEYBOARD_ACTION;
 					} else
-						LOGERR("Invalid key info on layout%i, row%i, key%02i.\n", layoutindex, rowindex, keyindex);
+						LOGE("Invalid key info on layout%i, row%i, key%02i.\n", layoutindex, rowindex, keyindex);
 				}
 
 				// PROCESS LONG PRESS INFO IF EXISTS
@@ -224,14 +196,14 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 				if (attr) {
 					stratt = attr->value();
 					if (strlen(stratt.c_str()) >= 255) {
-						LOGERR("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
+						LOGE("Key info on layout%i, row%i, key%dd is too long.\n", layoutindex, rowindex, keyindex);
 						return;
 					}
 
 					strcpy(keyinfo, stratt.c_str());
 
 					if (strlen(keyinfo) == 0) {
-						LOGERR("No long press info on layout%i, row%i, long%dd.\n", layoutindex, rowindex, keyindex);
+						LOGE("No long press info on layout%i, row%i, long%dd.\n", layoutindex, rowindex, keyindex);
 						return;
 					}
 
@@ -277,7 +249,7 @@ GUIKeyboard::GUIKeyboard(xml_node<>* node)
 							// This is an action
 							keyboard_keys[layoutindex - 1][rowindex - 1][keyindex - 1].longpresskey = KEYBOARD_ACTION;
 						} else
-							LOGERR("Invalid long press key info on layout%i, row%i, long%02i.\n", layoutindex, rowindex, keyindex);
+							LOGE("Invalid long press key info on layout%i, row%i, long%02i.\n", layoutindex, rowindex, keyindex);
 					}
 				}
 				keyindex++;
@@ -322,26 +294,7 @@ int GUIKeyboard::Render(void)
 	if (keyboardImg[currentLayout - 1] && keyboardImg[currentLayout - 1]->GetResource())
 		gr_blit(keyboardImg[currentLayout - 1]->GetResource(), 0, 0, KeyboardWidth, KeyboardHeight, mRenderX, mRenderY);
 
-	if (hasHighlight && highlightRenderCount != 0) {
-		int boxheight, boxwidth, x;
-		if (rowY == 0)
-			boxheight = row_heights[currentLayout - 1][rowY];
-		else
-			boxheight = row_heights[currentLayout - 1][rowY] - row_heights[currentLayout - 1][rowY - 1];
-		if (colX == 0) {
-			x = mRenderX;
-			boxwidth = keyboard_keys[currentLayout - 1][rowY][colX].end_x;
-		} else {
-			x = mRenderX + keyboard_keys[currentLayout - 1][rowY][colX - 1].end_x;
-			boxwidth = keyboard_keys[currentLayout - 1][rowY][colX].end_x - keyboard_keys[currentLayout - 1][rowY][colX - 1].end_x;
-		}
-		gr_color(mHighlightColor.red, mHighlightColor.green, mHighlightColor.blue, mHighlightColor.alpha);
-		gr_fill(x, mRenderY + row_heights[currentLayout - 1][rowY - 1], boxwidth, boxheight);
-		if (highlightRenderCount > 0)
-			highlightRenderCount--;
-	} else
-		mRendered = true;
-
+	mRendered = true;
 	return ret;
 }
 
@@ -370,7 +323,7 @@ int GUIKeyboard::SetRenderPos(int x, int y, int w, int h)
 
 int GUIKeyboard::GetSelection(int x, int y)
 {
-	if (x < mRenderX || x - mRenderX > (int)KeyboardWidth || y < mRenderY || y - mRenderY > (int)KeyboardHeight) return -1;
+	if (x < mRenderX || x - mRenderX > mRenderW || y < mRenderY || y - mRenderY > mRenderH) return -1;
 	return 0;
 }
 
@@ -396,7 +349,6 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 			for (indexy=0; indexy<MAX_KEYBOARD_ROWS; indexy++) {
 				if (row_heights[currentLayout - 1][indexy] > rely) {
 					rowIndex = indexy;
-					rowY = indexy;
 					indexy = MAX_KEYBOARD_ROWS;
 				}
 			}
@@ -406,37 +358,20 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 				if (keyboard_keys[currentLayout - 1][rowIndex][indexx].end_x > relx) {
 					// This is the key that was pressed!
 					initial_key = keyboard_keys[currentLayout - 1][rowIndex][indexx].key;
-					colX = indexx;
 					indexx = MAX_KEYBOARD_KEYS;
 				}
 			}
-			if (initial_key != 0)
-				highlightRenderCount = -1;
-			else
-				highlightRenderCount = 0;
-			mRendered = false;
 		} else {
-			if (highlightRenderCount != 0)
-				mRendered = false;
-			highlightRenderCount = 0;
 			startSelection = 0;
 		}
 		break;
 	case TOUCH_DRAG:
 		break;
 	case TOUCH_RELEASE:
-		if (x < startX - (KeyboardWidth * 0.5)) {
-			if (highlightRenderCount != 0) {
-				highlightRenderCount = 0;
-				mRendered = false;
-			}
+		if (x < startX - (mRenderW * 0.5)) {
 			PageManager::NotifyKeyboard(KEYBOARD_SWIPE_LEFT);
 			return 0;
-		} else if (x > startX + (KeyboardWidth * 0.5)) {
-			if (highlightRenderCount != 0) {
-				highlightRenderCount = 0;
-				mRendered = false;
-			}
+		} else if (x > startX + (mRenderW * 0.5)) {
 			PageManager::NotifyKeyboard(KEYBOARD_SWIPE_RIGHT);
 			return 0;
 		}
@@ -444,19 +379,8 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 	case TOUCH_HOLD:
 	case TOUCH_REPEAT:
 
-		if (startSelection == 0 || GetSelection(x, y) == -1) {
-			if (highlightRenderCount != 0) {
-				highlightRenderCount = 0;
-				mRendered = false;
-			}
+		if (startSelection == 0 || GetSelection(x, y) == -1)
 			return 0;
-		} else if (highlightRenderCount != 0) {
-			if (state == TOUCH_RELEASE)
-				highlightRenderCount = 2;
-			else
-				highlightRenderCount = -1;
-			mRendered = false;
-		}
 
 		// Find the correct row
 		for (indexy=0; indexy<MAX_KEYBOARD_ROWS; indexy++) {
@@ -484,7 +408,6 @@ int GUIKeyboard::NotifyTouch(TOUCH_STATE state, int x, int y)
 						mRendered = false;
 					} else if ((int)keyboard_keys[currentLayout - 1][rowIndex][indexx].key == KEYBOARD_ACTION) {
 						// Action
-						highlightRenderCount = 0;
 						if (mAction) {
 							// Keyboard has its own action defined
 							return (mAction ? mAction->NotifyTouch(state, x, y) : 1);

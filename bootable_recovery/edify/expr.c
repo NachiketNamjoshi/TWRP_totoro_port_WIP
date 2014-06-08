@@ -287,13 +287,13 @@ Value* LessThanIntFn(const char* name, State* state, int argc, Expr* argv[]) {
 
     long l_int = strtol(left, &end, 10);
     if (left[0] == '\0' || *end != '\0') {
-        printf("[%s] is not an int\n", left);
+        fprintf(stderr, "[%s] is not an int\n", left);
         goto done;
     }
 
     long r_int = strtol(right, &end, 10);
     if (right[0] == '\0' || *end != '\0') {
-        printf("[%s] is not an int\n", right);
+        fprintf(stderr, "[%s] is not an int\n", right);
         goto done;
     }
 
@@ -495,7 +495,7 @@ Value** ReadValueVarArgs(State* state, int argc, Expr* argv[]) {
 
 // Use printf-style arguments to compose an error message to put into
 // *state.  Returns NULL.
-Value* ErrorAbort(State* state, const char* format, ...) {
+Value* ErrorAbort(State* state, char* format, ...) {
     char* buffer = malloc(4096);
     va_list v;
     va_start(v, format);

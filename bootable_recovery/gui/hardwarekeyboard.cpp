@@ -19,44 +19,40 @@
 #include <string>
 
 extern "C" {
-#include "../twcommon.h"
+#include "../common.h"
 #include "../minuitwrp/minui.h"
+#include "../recovery_ui.h"
 }
 
 #include "rapidxml.hpp"
 #include "objects.hpp"
 
-HardwareKeyboard::HardwareKeyboard(void)
-{
-
+HardwareKeyboard::HardwareKeyboard(void) {
+	// Do Nothing
 }
 
-HardwareKeyboard::~HardwareKeyboard()
-{
-	
+HardwareKeyboard::~HardwareKeyboard() {
+	// Do Nothing
 }
 
-int HardwareKeyboard::KeyDown(int key_code)
-{
+int HardwareKeyboard::KeyDown(int key_code) {
 #ifdef _EVENT_LOGGING
-	LOGERR("HardwareKeyboard::KeyDown %i\n", key_code);
+	LOGE("HardwareKeyboard::KeyDown %i\n", key_code);
 #endif
 	PageManager::NotifyKey(key_code);
 	return 0; // 0 = no key repeat anything else turns on key repeat
 }
 
-int HardwareKeyboard::KeyUp(int key_code)
-{
+int HardwareKeyboard::KeyUp(int key_code) {
 #ifdef _EVENT_LOGGING
-	LOGERR("HardwareKeyboard::KeyUp %i\n", key_code);
+	LOGE("HardwareKeyboard::KeyUp %i\n", key_code);
 #endif
 	return 0;
 }
 
-int HardwareKeyboard::KeyRepeat(void)
-{
+int HardwareKeyboard::KeyRepeat(void) {
 #ifdef _EVENT_LOGGING
-	LOGERR("HardwareKeyboard::KeyRepeat\n");
+	LOGE("HardwareKeyboard::KeyRepeat\n");
 #endif
 	return 0;
 }
