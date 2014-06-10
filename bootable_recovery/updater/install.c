@@ -6,6 +6,11 @@
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
+ *	
+ *
+ * Messed by Nachiket.Namjoshi
+ * To get TWRP working on SGY
+ *
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,

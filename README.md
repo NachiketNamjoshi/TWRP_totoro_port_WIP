@@ -13,4 +13,16 @@ Changelog:
 - Added 240x320 theme (thanks to DC07)
 - Cleared install.c errors due to make_ext4fs() function.
 - Built Successfully (however, never boots into the recovery...)
--------------------------------------------------------------------
+=============================
+
+
+Last update: Tue, Jun 10, 2014
+
+**********
+Changelog:
+**********
+- Made up a few changes in install.c
+- building recovery.img successful
+- need updater-script
+
+=================================
